@@ -6,9 +6,6 @@
 
     var DEFAULT_OPTIONS = {
         // These are the defaults.
-        color: "#556b2f",
-        backgroundColor: "white",
-
         width: null,
         height: null,
 
@@ -57,7 +54,11 @@
             })
             .addClass('scrollableList');
 
-        self.$spacer = $('<div/>')
+        self.$spacerTop = $('<div/>')
+            .appendTo(self.$element)
+            .height(0)
+            .addClass('scrollable-list-item scrollable-list-spacer');
+        self.$spacerBottom= $('<div/>')
             .appendTo(self.$element)
             .height(0)
             .addClass('scrollable-list-item scrollable-list-spacer');
@@ -67,8 +68,41 @@
         var contentHeight = _calculateContentHeight(self);
         var scrollPosition = self.$element.scrollTop();
 
-        _getEntriesToShow(self, contentHeight, scrollPosition).done(function(){
-            console.log('_getEntriesToShow');
+        _getEntriesToShow(self, contentHeight, scrollPosition).done(function(firstEntryIndex, lastEntryIndex){
+            var previousEntryIndex = firstEntryIndex - 1;
+            if(previousEntryIndex >= 0){
+                self.$spacerTop.height(self._data[previousEntryIndex].bottom);
+                //so after this, all the entries before firstEntryIndex are all cascaded into one $spacerTop element
+            }else{
+                self.$spacerTop.height(0);
+            }
+
+            //TODO selectively update, instead of removing all
+            self.$element.find('.scrollable-list-item:not(.scrollable-list-spacer)').remove();
+
+            //A div to hold the rendered row markup
+            var $tempDiv = $('<div/>').appendTo('body');
+            for(var i = lastEntryIndex; i >= firstEntryIndex; i-- ){
+                var $children = $tempDiv.empty().html(self.renderRow(self._data[i].data)).children();
+                $children.addClass('scrollable-list-item');
+                //TODO it probably only makes sense to pick up the first child
+                self.$spacerTop.after($children);
+            }
+            $tempDiv.remove();
+
+            //update $spacerBottom
+            if(self._maxEntriesDrawn > lastEntryIndex){
+                var contentBottomPosition = self._data[self._maxEntriesDrawn].bottom;
+                var renderedEntryBottom = self._data[lastEntryIndex].bottom;
+                self.$spacerBottom.height(contentBottomPosition - renderedEntryBottom);
+                //so after this, all the entries after lastEntryIndex are all cascaded into one $spacerBottom element
+            }else{
+                self._maxEntriesDrawn = lastEntryIndex;
+                self.$spacerBottom.height(0);
+            }
+
+            //make sure the scrollTop is the same after re-rendering
+            self.$element.scrollTop(scrollPosition);
         });
     }
 
@@ -117,11 +151,8 @@
         _check();
 
         signalEnoughData.done(function(){
-            console.log('enough data');
-            console.log(self._data);
-
             //find the first entry that should be displayed
-            var firstEntryInView = self._data.binarySearch(scrollPosition, function(a, b){
+            var firstEntryIndexInView = self._data.binarySearch(scrollPosition, function(a, b){
                 if(a.top <= b && a.bottom >=b){
                     return 0;
                 }else if(a.bottom < b){
@@ -130,10 +161,14 @@
                     return 1;
                 }
             });
-            //TODO find the last entry that should be displayed
-
+            //find the last entry that should be displayed
+            var lastEntryIndexInView = firstEntryIndexInView;
+            while( lastEntryIndexInView < self._data.length &&
+                self._data[lastEntryIndexInView].bottom < dataHeightToReach){
+                lastEntryIndexInView ++;
+            }
+            deferred.resolve(firstEntryIndexInView, lastEntryIndexInView);
         });
-
 
         return deferred;
     }
@@ -150,7 +185,8 @@
             self._data.push({
                 top : offset,
                 height : height,
-                bottom : bottom
+                bottom : bottom,
+                data: entry
             });
             offset = bottom;
         });
@@ -166,13 +202,14 @@
     }
 
     var Events = {
-        onScroll: function(){
-            console.log(arguments);
+        onScroll: function(scrollableList, event){
+            _render(scrollableList);
         }
     };
 
     //public
     $.extend(ScrollableList.prototype, {
+        _maxEntriesDrawn: 0,
         _data: [],
         start: function(){
             _monitorEvents(this);
