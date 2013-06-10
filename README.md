@@ -4,7 +4,7 @@ Scrollable List
 Usage
 =====
 ```js
-$(domNOde).scrollableList(options);
+$(domNode).scrollableList(options);
 ```
 
 * `option` is an object with follwing properties available.
