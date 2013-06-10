@@ -7,13 +7,13 @@ Usage
 $(domNOde).scrollableList(options);
 ```
 
- * `option` is an object with follwing properties available.
+* `option` is an object with follwing properties available.
  * `width` : {int} the width of the list
  * `height` : {int} the height of the list
  * `getData` : a function to pull out the data dynamically.
-  * `function(offset, count)` @return {Array}
+   `function(offset, count)` @return {Array}
  * `renderRow` : a function to render a data row
-  * `function(row)` @return {DOM|string}
+   `function(row)` @return {DOM|string}
 
 Example
 ======
