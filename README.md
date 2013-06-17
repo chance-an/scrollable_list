@@ -4,16 +4,16 @@ Scrollable List
 Usage
 =====
 ```js
-$(domNOde).scrollableList(options);
+$(domNode).scrollableList(options);
 ```
 
-- `option` is an object with follwing properties available.
- - `width` : {int} the width of the list
- - `height` : {int} the height of the list
- - `getData` : a function to pull out the data dynamically.
-  - `function(offset, count)` @return {Array}
- - `renderRow` : a function to render a data row
-  - `function(row)` @return {DOM|string}
+* `option` is an object with follwing properties available.
+ * `width` : {int} the width of the list
+ * `height` : {int} the height of the list
+ * `getData` : a function to pull out the data dynamically.
+   `function(offset, count)` @return {Array}
+ * `renderRow` : a function to render a data row
+   `function(row)` @return {DOM|string}
 
 Example
 ======
